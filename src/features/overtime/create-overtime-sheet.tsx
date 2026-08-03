@@ -45,14 +45,17 @@ export function CreateOvertimeSheet() {
       ? combineDateAndTime(form.workDate, form.endTime)
       : null
 
+  const hasEndTime = form.endTime.trim().length > 0
   const workedHours = start && end ? hoursBetween(start, end) : 0
   const rawOvertime =
     workedHours > 0
       ? Math.round((workedHours - STANDARD_WORK_HOURS) * 100) / 100
       : 0
   const previewHours = start && end ? calculateOvertimeHours(start, end) : 0
-  const exceedsMax = rawOvertime > MAX_OVERTIME_HOURS
-  const canSave = previewHours > 0 && !exceedsMax
+  const exceedsMax = hasEndTime && rawOvertime > MAX_OVERTIME_HOURS
+  const canSaveOpen = Boolean(form.workDate && form.startTime) && !hasEndTime
+  const canSaveClosed = hasEndTime && previewHours > 0 && !exceedsMax
+  const canSave = canSaveOpen || canSaveClosed
 
   const errorMessage =
     createOvertime.error instanceof Error
@@ -80,7 +83,11 @@ export function CreateOvertimeSheet() {
     event.preventDefault()
 
     try {
-      await createOvertime.mutateAsync(form)
+      await createOvertime.mutateAsync({
+        workDate: form.workDate,
+        startTime: form.startTime,
+        endTime: hasEndTime ? form.endTime : undefined,
+      })
       setOpen(false)
     } catch {
       return
@@ -100,8 +107,9 @@ export function CreateOvertimeSheet() {
         <SheetHeader>
           <SheetTitle>Nova hora extra</SheetTitle>
           <SheetDescription>
-            Informe entrada e saída do expediente. A extra é o que passar de{' '}
-            {STANDARD_WORK_HOURS}h (máx. {MAX_OVERTIME_HOURS}h).
+            Informe a entrada para iniciar o dia. A saída pode ficar em aberto e
+            ser preenchida depois. Extra = o que passar de {STANDARD_WORK_HOURS}
+            h (máx. {MAX_OVERTIME_HOURS}h).
           </SheetDescription>
         </SheetHeader>
 
@@ -133,11 +141,10 @@ export function CreateOvertimeSheet() {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="end-time">Saída</Label>
+                <Label htmlFor="end-time">Saída (opcional)</Label>
                 <Input
                   id="end-time"
                   type="time"
-                  required
                   value={form.endTime}
                   onValueChange={updateField('endTime')}
                 />
@@ -146,15 +153,22 @@ export function CreateOvertimeSheet() {
 
             <div className="rounded-xl bg-primary/10 px-4 py-3 ring-1 ring-primary/15">
               <p className="text-xs font-medium tracking-wide text-primary/80 uppercase">
-                Horas extras
+                {hasEndTime ? 'Horas extras' : 'Status'}
               </p>
               <p className="mt-1 text-2xl font-semibold tabular-nums tracking-tight text-primary">
-                {formatDecimalHours(previewHours)}
+                {hasEndTime
+                  ? formatDecimalHours(previewHours)
+                  : 'Em andamento'}
               </p>
-              {workedHours > 0 ? (
+              {hasEndTime && workedHours > 0 ? (
                 <p className="mt-1 text-xs text-muted-foreground">
                   Expediente: {formatDecimalHours(workedHours)} · padrão{' '}
                   {STANDARD_WORK_HOURS}h
+                </p>
+              ) : null}
+              {!hasEndTime ? (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  O dia fecha quando você informar a saída.
                 </p>
               ) : null}
               {exceedsMax ? (
@@ -181,7 +195,11 @@ export function CreateOvertimeSheet() {
               disabled={createOvertime.isPending || !canSave}
               className="min-h-12 w-full text-base"
             >
-              {createOvertime.isPending ? 'Salvando…' : 'Salvar'}
+              {createOvertime.isPending
+                ? 'Salvando…'
+                : hasEndTime
+                  ? 'Salvar'
+                  : 'Iniciar expediente'}
             </Button>
           </SheetFooter>
         </form>

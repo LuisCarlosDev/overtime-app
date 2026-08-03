@@ -6,6 +6,7 @@ import {
 } from '@tanstack/react-query'
 import {
   createOvertimeRecord,
+  finalizeOvertimeRecord,
   listOvertimeRecords,
 } from './overtime.functions'
 
@@ -27,7 +28,7 @@ export function useOvertimeRecords() {
 type CreateOvertimeInput = {
   workDate: string
   startTime: string
-  endTime: string
+  endTime?: string
 }
 
 export function useCreateOvertimeRecord() {
@@ -35,6 +36,23 @@ export function useCreateOvertimeRecord() {
 
   return useMutation({
     mutationFn: (data: CreateOvertimeInput) => createOvertimeRecord({ data }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: overtimeKeys.lists() })
+    },
+  })
+}
+
+type FinalizeOvertimeInput = {
+  id: string
+  endTime: string
+}
+
+export function useFinalizeOvertimeRecord() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: FinalizeOvertimeInput) =>
+      finalizeOvertimeRecord({ data }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: overtimeKeys.lists() })
     },

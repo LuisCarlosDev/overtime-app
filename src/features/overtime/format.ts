@@ -12,6 +12,14 @@ export function statusLabel(status: 'pending' | 'paid') {
   return status === 'paid' ? 'Pago' : 'Aguardando'
 }
 
+export function recordStatusLabel(options: {
+  endTime: string | null
+  status: 'pending' | 'paid'
+}) {
+  if (!options.endTime) return 'Em andamento'
+  return statusLabel(options.status)
+}
+
 export function todayInputValue() {
   const now = new Date()
   const y = now.getFullYear()
