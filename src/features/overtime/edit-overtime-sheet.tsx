@@ -1,5 +1,4 @@
 import dayjs from 'dayjs'
-import { Pencil } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
@@ -11,7 +10,6 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from '#/components/ui/sheet'
 import {
   calculateOvertimeHours,
@@ -28,6 +26,8 @@ type EditOvertimeSheetProps = {
   workDate: string
   startTime: string
   endTime: string | null
+  open: boolean
+  onOpenChange: (open: boolean) => void
 }
 
 function formFromRecord(record: {
@@ -47,8 +47,9 @@ export function EditOvertimeSheet({
   workDate,
   startTime,
   endTime,
+  open,
+  onOpenChange,
 }: EditOvertimeSheetProps) {
-  const [open, setOpen] = useState(false)
   const [form, setForm] = useState(() =>
     formFromRecord({ workDate, startTime, endTime }),
   )
@@ -91,7 +92,7 @@ export function EditOvertimeSheet({
   }
 
   function handleOpenChange(next: boolean) {
-    setOpen(next)
+    onOpenChange(next)
     if (next) {
       setForm(formFromRecord({ workDate, startTime, endTime }))
       updateOvertime.reset()
@@ -108,7 +109,7 @@ export function EditOvertimeSheet({
         startTime: form.startTime,
         endTime: hasEndTime ? form.endTime : undefined,
       })
-      setOpen(false)
+      onOpenChange(false)
     } catch {
       return
     }
@@ -116,15 +117,6 @@ export function EditOvertimeSheet({
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetTrigger
-        render={
-          <Button size="sm" className="min-h-10 w-full" variant="outline" />
-        }
-      >
-        <Pencil className="size-4" />
-        Editar
-      </SheetTrigger>
-
       <SheetContent side="bottom" className="gap-0">
         <SheetHeader>
           <SheetTitle>Editar expediente</SheetTitle>

@@ -10,7 +10,6 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from '#/components/ui/sheet'
 import {
   calculateOvertimeHours,
@@ -26,14 +25,17 @@ type FinalizeOvertimeSheetProps = {
   id: string
   workDate: string
   startTime: string
+  open: boolean
+  onOpenChange: (open: boolean) => void
 }
 
 export function FinalizeOvertimeSheet({
   id,
   workDate,
   startTime,
+  open,
+  onOpenChange,
 }: FinalizeOvertimeSheetProps) {
-  const [open, setOpen] = useState(false)
   const [endTime, setEndTime] = useState('')
   const finalizeOvertime = useFinalizeOvertimeRecord()
 
@@ -62,7 +64,7 @@ export function FinalizeOvertimeSheet({
         : null
 
   function handleOpenChange(next: boolean) {
-    setOpen(next)
+    onOpenChange(next)
     if (next) {
       setEndTime('')
       finalizeOvertime.reset()
@@ -74,7 +76,7 @@ export function FinalizeOvertimeSheet({
 
     try {
       await finalizeOvertime.mutateAsync({ id, endTime })
-      setOpen(false)
+      onOpenChange(false)
     } catch {
       return
     }
@@ -82,14 +84,6 @@ export function FinalizeOvertimeSheet({
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetTrigger
-        render={
-          <Button size="sm" className="min-h-10 w-full" variant="default" />
-        }
-      >
-        Fechar saída
-      </SheetTrigger>
-
       <SheetContent side="bottom" className="gap-0">
         <SheetHeader>
           <SheetTitle>Fechar expediente</SheetTitle>

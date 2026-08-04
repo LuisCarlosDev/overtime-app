@@ -270,3 +270,28 @@ export const updateOvertimeRecord = createServerFn({ method: 'POST' })
 
     return serializeRecord(record)
   })
+
+type DeleteOvertimeInput = {
+  id: string
+}
+
+export const deleteOvertimeRecord = createServerFn({ method: 'POST' })
+  .validator((data: DeleteOvertimeInput) => {
+    if (!data.id) {
+      throw new Error('Registro inválido.')
+    }
+
+    return { id: data.id }
+  })
+  .handler(async ({ data }) => {
+    const [record] = await db
+      .delete(overtimeRecords)
+      .where(eq(overtimeRecords.id, data.id))
+      .returning()
+
+    if (!record) {
+      throw new Error('Registro não encontrado.')
+    }
+
+    return { id: record.id }
+  })

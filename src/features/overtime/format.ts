@@ -9,15 +9,11 @@ export function formatDecimalHours(value: string | number) {
 }
 
 export function statusLabel(status: 'pending' | 'paid') {
-  return status === 'paid' ? 'Pago' : 'Aguardando'
+  return status === 'paid' ? 'Pago' : 'Aguardando pagamento'
 }
 
-export function recordStatusLabel(options: {
-  endTime: string | null
-  status: 'pending' | 'paid'
-}) {
-  if (!options.endTime) return 'Em andamento'
-  return statusLabel(options.status)
+export function progressStatusLabel(endTime: string | null) {
+  return endTime ? 'Concluído' : 'Em andamento'
 }
 
 export function todayInputValue() {

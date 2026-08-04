@@ -6,6 +6,7 @@ import {
 } from '@tanstack/react-query'
 import {
   createOvertimeRecord,
+  deleteOvertimeRecord,
   finalizeOvertimeRecord,
   listOvertimeRecords,
   updateOvertimeRecord,
@@ -72,6 +73,21 @@ export function useUpdateOvertimeRecord() {
 
   return useMutation({
     mutationFn: (data: UpdateOvertimeInput) => updateOvertimeRecord({ data }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: overtimeKeys.lists() })
+    },
+  })
+}
+
+type DeleteOvertimeInput = {
+  id: string
+}
+
+export function useDeleteOvertimeRecord() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: DeleteOvertimeInput) => deleteOvertimeRecord({ data }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: overtimeKeys.lists() })
     },
