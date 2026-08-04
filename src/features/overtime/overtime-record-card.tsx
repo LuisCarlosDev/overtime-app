@@ -7,6 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from '#/components/ui/card'
+import { EditOvertimeSheet } from './edit-overtime-sheet'
 import { FinalizeOvertimeSheet } from './finalize-overtime-sheet'
 import { formatDecimalHours, recordStatusLabel } from './format'
 
@@ -69,13 +70,21 @@ export function OvertimeRecordCard({
           </div>
         </dl>
 
-        {isOpen ? (
-          <FinalizeOvertimeSheet
+        <div className="flex flex-col gap-2">
+          {isOpen ? (
+            <FinalizeOvertimeSheet
+              id={id}
+              workDate={workDate}
+              startTime={startTime}
+            />
+          ) : null}
+          <EditOvertimeSheet
             id={id}
             workDate={workDate}
             startTime={startTime}
+            endTime={endTime}
           />
-        ) : null}
+        </div>
       </CardContent>
     </Card>
   )

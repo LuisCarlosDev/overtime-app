@@ -8,6 +8,7 @@ import {
   createOvertimeRecord,
   finalizeOvertimeRecord,
   listOvertimeRecords,
+  updateOvertimeRecord,
 } from './overtime.functions'
 
 export const overtimeKeys = {
@@ -53,6 +54,24 @@ export function useFinalizeOvertimeRecord() {
   return useMutation({
     mutationFn: (data: FinalizeOvertimeInput) =>
       finalizeOvertimeRecord({ data }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: overtimeKeys.lists() })
+    },
+  })
+}
+
+type UpdateOvertimeInput = {
+  id: string
+  workDate: string
+  startTime: string
+  endTime?: string
+}
+
+export function useUpdateOvertimeRecord() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: UpdateOvertimeInput) => updateOvertimeRecord({ data }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: overtimeKeys.lists() })
     },

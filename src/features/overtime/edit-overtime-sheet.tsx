@@ -1,4 +1,5 @@
-import { Plus } from 'lucide-react'
+import dayjs from 'dayjs'
+import { Pencil } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
@@ -19,22 +20,39 @@ import {
   hoursBetween,
   MAX_OVERTIME_HOURS,
   STANDARD_WORK_HOURS,
-  todayInputValue,
 } from './format'
-import { useCreateOvertimeRecord } from './overtime.queries'
+import { useUpdateOvertimeRecord } from './overtime.queries'
 
-function defaultFormState() {
+type EditOvertimeSheetProps = {
+  id: string
+  workDate: string
+  startTime: string
+  endTime: string | null
+}
+
+function formFromRecord(record: {
+  workDate: string
+  startTime: string
+  endTime: string | null
+}) {
   return {
-    workDate: todayInputValue(),
-    startTime: '08:00',
-    endTime: '',
+    workDate: dayjs(record.workDate).format('YYYY-MM-DD'),
+    startTime: dayjs(record.startTime).format('HH:mm'),
+    endTime: record.endTime ? dayjs(record.endTime).format('HH:mm') : '',
   }
 }
 
-export function CreateOvertimeSheet() {
+export function EditOvertimeSheet({
+  id,
+  workDate,
+  startTime,
+  endTime,
+}: EditOvertimeSheetProps) {
   const [open, setOpen] = useState(false)
-  const [form, setForm] = useState(defaultFormState)
-  const createOvertime = useCreateOvertimeRecord()
+  const [form, setForm] = useState(() =>
+    formFromRecord({ workDate, startTime, endTime }),
+  )
+  const updateOvertime = useUpdateOvertimeRecord()
 
   const start =
     form.workDate && form.startTime
@@ -59,24 +77,24 @@ export function CreateOvertimeSheet() {
   const canSave = canSaveOpen || canSaveClosed
 
   const errorMessage =
-    createOvertime.error instanceof Error
-      ? createOvertime.error.message
-      : createOvertime.error
+    updateOvertime.error instanceof Error
+      ? updateOvertime.error.message
+      : updateOvertime.error
         ? 'Não foi possível salvar.'
         : null
 
-  function updateField(field: keyof ReturnType<typeof defaultFormState>) {
+  function updateField(field: keyof ReturnType<typeof formFromRecord>) {
     return (value: string) => {
       setForm((current) => ({ ...current, [field]: value }))
-      createOvertime.reset()
+      updateOvertime.reset()
     }
   }
 
   function handleOpenChange(next: boolean) {
     setOpen(next)
     if (next) {
-      setForm(defaultFormState())
-      createOvertime.reset()
+      setForm(formFromRecord({ workDate, startTime, endTime }))
+      updateOvertime.reset()
     }
   }
 
@@ -84,7 +102,8 @@ export function CreateOvertimeSheet() {
     event.preventDefault()
 
     try {
-      await createOvertime.mutateAsync({
+      await updateOvertime.mutateAsync({
+        id,
         workDate: form.workDate,
         startTime: form.startTime,
         endTime: hasEndTime ? form.endTime : undefined,
@@ -98,19 +117,20 @@ export function CreateOvertimeSheet() {
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetTrigger
-        render={<Button size="lg" className="min-h-11 px-4" />}
+        render={
+          <Button size="sm" className="min-h-10 w-full" variant="outline" />
+        }
       >
-        <Plus />
-        Cadastrar
+        <Pencil className="size-4" />
+        Editar
       </SheetTrigger>
 
       <SheetContent side="bottom" className="gap-0">
         <SheetHeader>
-          <SheetTitle>Nova hora extra</SheetTitle>
+          <SheetTitle>Editar expediente</SheetTitle>
           <SheetDescription>
-            Informe a entrada para iniciar o dia. A saída pode ficar em aberto e
-            ser preenchida depois. Extra = o que passar de {STANDARD_WORK_HOURS}
-            h (máx. {MAX_OVERTIME_HOURS}h).
+            Ajuste data, entrada e saída. Se limpar a saída, o dia volta a ficar
+            em andamento.
           </SheetDescription>
         </SheetHeader>
 
@@ -120,9 +140,9 @@ export function CreateOvertimeSheet() {
         >
           <div className="grid gap-5 px-4 py-5">
             <div className="grid gap-2">
-              <Label htmlFor="work-date">Data</Label>
+              <Label htmlFor="edit-work-date">Data</Label>
               <Input
-                id="work-date"
+                id="edit-work-date"
                 type="date"
                 required
                 value={form.workDate}
@@ -132,9 +152,9 @@ export function CreateOvertimeSheet() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-2">
-                <Label htmlFor="start-time">Entrada</Label>
+                <Label htmlFor="edit-start-time">Entrada</Label>
                 <Input
-                  id="start-time"
+                  id="edit-start-time"
                   type="time"
                   required
                   value={form.startTime}
@@ -142,9 +162,9 @@ export function CreateOvertimeSheet() {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="end-time">Saída (opcional)</Label>
+                <Label htmlFor="edit-end-time">Saída (opcional)</Label>
                 <Input
-                  id="end-time"
+                  id="edit-end-time"
                   type="time"
                   value={form.endTime}
                   onValueChange={updateField('endTime')}
@@ -169,7 +189,7 @@ export function CreateOvertimeSheet() {
               ) : null}
               {!hasEndTime ? (
                 <p className="mt-1 text-xs text-muted-foreground">
-                  O dia fecha quando você informar a saída.
+                  Sem saída o expediente fica em andamento.
                 </p>
               ) : null}
               {exceedsMax ? (
@@ -193,14 +213,10 @@ export function CreateOvertimeSheet() {
             <Button
               type="submit"
               size="lg"
-              disabled={createOvertime.isPending || !canSave}
+              disabled={updateOvertime.isPending || !canSave}
               className="min-h-12 w-full text-base"
             >
-              {createOvertime.isPending
-                ? 'Salvando…'
-                : hasEndTime
-                  ? 'Salvar'
-                  : 'Iniciar expediente'}
+              {updateOvertime.isPending ? 'Salvando…' : 'Salvar alterações'}
             </Button>
           </SheetFooter>
         </form>

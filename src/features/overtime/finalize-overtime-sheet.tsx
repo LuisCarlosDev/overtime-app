@@ -51,7 +51,8 @@ export function FinalizeOvertimeSheet({
       : 0
   const previewHours = end ? calculateOvertimeHours(start, end) : 0
   const exceedsMax = rawOvertime > MAX_OVERTIME_HOURS
-  const canSave = Boolean(endTime) && previewHours > 0 && !exceedsMax
+  const hasValidEnd = Boolean(end && end > start)
+  const canSave = hasValidEnd && !exceedsMax
 
   const errorMessage =
     finalizeOvertime.error instanceof Error
